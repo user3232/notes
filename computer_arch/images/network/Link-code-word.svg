@@ -1,0 +1,156 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: fig2dev Version 3.2 Patchlevel 5-alpha7 -->
+<!-- CreationDate: Mon Jul  3 13:55:27 2006 -->
+<!-- Magnification: 1.050 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="3.5in" height="1.4in" viewBox="642 1782 4188 1631">
+<g style="stroke-width:.025in; stroke:black; fill:none">
+<!-- Line: box -->
+<rect x="661" y="1795" width="4157" height="1606" rx="0" 
+style="stroke:#ffffff;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+fill:#ffffff;
+"/>
+<!-- Line -->
+<polyline points="1322,2456
+4724,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="3118,2078
+3118,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="3307,2078
+3307,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="4062,2078
+4062,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="2929,2078
+2929,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="1795,2078
+1795,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="1984,2078
+1984,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="2173,2078
+2173,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="2362,2078
+2362,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="2551,2078
+2551,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="2740,2078
+2740,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="1606,2078
+1606,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="4251,2078
+4251,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="4440,2078
+4440,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="1606,2598
+1606,2645
+1795,2645
+1795,2598
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="1606,2976
+1606,3023
+4440,3023
+4440,2976
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="3023,2078
+3023,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Line -->
+<polyline points="1700,2078
+1700,2456
+" style="stroke:#000000;stroke-width:8;
+stroke-linejoin:miter; stroke-linecap:butt;
+"/>
+<!-- Text -->
+<text xml:space="preserve" x="3685" y="2314" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="152" text-anchor="middle">...</text>
+<!-- Text -->
+<text xml:space="preserve" x="1700" y="2834" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">125microsec +/- 14microsec</text>
+<!-- Text -->
+<text xml:space="preserve" x="2929" y="3307" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">2ms</text>
+<!-- Text -->
+<text xml:space="preserve" x="2267" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">0</text>
+<!-- Text -->
+<text xml:space="preserve" x="2078" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">0</text>
+<!-- Text -->
+<text xml:space="preserve" x="3023" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">1</text>
+<!-- Text -->
+<text xml:space="preserve" x="4346" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">0</text>
+<!-- Text -->
+<text xml:space="preserve" x="4157" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">0</text>
+<!-- Text -->
+<text xml:space="preserve" x="2645" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">0</text>
+<!-- Text -->
+<text xml:space="preserve" x="2834" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">0</text>
+<!-- Text -->
+<text xml:space="preserve" x="3212" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">0</text>
+<!-- Text -->
+<text xml:space="preserve" x="2456" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">0</text>
+<!-- Text -->
+<text xml:space="preserve" x="1700" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">1</text>
+<!-- Text -->
+<text xml:space="preserve" x="1889" y="2031" stroke="#000000" fill="#000000"  font-family="AvantGarde" font-style="normal" font-weight="normal" font-size="126" text-anchor="middle">0</text>
+</g>
+</svg>

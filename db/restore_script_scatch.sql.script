@@ -1,0 +1,571 @@
+-- ****************************************
+-- Use some environment variables to customize script
+-- providing default values
+-- ****************************************
+
+-- Data path
+:setvar SqlSamplesSourceDataPath "C:\Samples\AdventureWorks\"
+-- Database name
+:setvar DatabaseName "AdventureWorks"
+
+
+-- ****************************************
+-- Check data path
+-- ****************************************
+
+IF '$(SqlSamplesSourceDataPath)' IS NULL 
+  OR '$(SqlSamplesSourceDataPath)' = ''
+BEGIN
+	RAISERROR(
+    N'The variable SqlSamplesSourceDataPath must be defined.', 
+    16, 
+    127
+  ) WITH NOWAIT
+	RETURN
+END;
+
+-- ****************************************
+-- Drop database
+-- ****************************************
+
+USE [master];
+GO
+
+PRINT '';
+PRINT '*** Dropping Database';
+GO
+
+IF EXISTS (
+  SELECT [name] 
+  FROM [master].[sys].[databases] 
+  WHERE [name] = N'$(DatabaseName)'
+)
+DROP DATABASE $(DatabaseName);
+
+-- If the database has any other 
+-- open connections close the network connection.
+IF @@ERROR = 3702 
+    RAISERROR(
+      '$(DatabaseName) cannot be dropped'
+      +N'(still other open connections)', 
+      127, 
+      127
+    ) WITH NOWAIT, LOG;
+GO
+
+-- ****************************************
+-- Create Database
+-- ****************************************
+
+CREATE DATABASE $(DatabaseName);
+GO
+
+
+PRINT '';
+PRINT '*** Checking for $(DatabaseName) Database';
+/* 
+CHECK FOR DATABASE IF IT DOESN'T EXISTS, 
+DO NOT RUN THE REST OF THE SCRIPT 
+*/
+IF NOT EXISTS (
+  SELECT TOP 1 1 FROM sys.databases 
+  WHERE name = N'$(DatabaseName)'
+)
+BEGIN
+PRINT '**************************'
++char(10)+'***$(DatabaseName) Database does not exist.'
++char(10)+'***Make sure that the script'
++char(10)+'***is being run in SQLCMD mode'
++char(10)+'***and that the variables have been correctly set.'
++char(10)+'**************************';
+SET NOEXEC ON;
+END
+GO
+
+ALTER DATABASE $(DatabaseName) 
+SET RECOVERY SIMPLE, 
+    ANSI_NULLS ON, 
+    ANSI_PADDING ON, 
+    ANSI_WARNINGS ON, 
+    ARITHABORT ON, 
+    CONCAT_NULL_YIELDS_NULL ON, 
+    QUOTED_IDENTIFIER ON, 
+    NUMERIC_ROUNDABORT OFF, 
+    PAGE_VERIFY CHECKSUM, 
+    ALLOW_SNAPSHOT_ISOLATION OFF;
+GO
+
+USE $(DatabaseName);
+GO
+
+-- ****************************************
+-- Create DDL Trigger for Database
+-- ****************************************
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+-- Create table to store database object creation messages
+-- *** WARNING:  THIS TABLE IS INTENTIONALLY A HEAP ***
+-- *** DO NOT ADD A PRIMARY KEY ***
+CREATE TABLE [dbo].[DatabaseLog](
+    [DatabaseLogID] [int] IDENTITY (1, 1) NOT NULL,
+    [PostTime] [datetime] NOT NULL, 
+    [DatabaseUser] [sysname] NOT NULL, 
+    [Event] [sysname] NOT NULL, 
+    [Schema] [sysname] NULL, 
+    [Object] [sysname] NULL, 
+    [TSQL] [nvarchar](max) NOT NULL, 
+    [XmlEvent] [xml] NOT NULL
+) ON [PRIMARY];
+GO
+
+CREATE TRIGGER [ddlDatabaseTriggerLog] ON DATABASE 
+FOR DDL_DATABASE_LEVEL_EVENTS AS 
+BEGIN
+  SET NOCOUNT ON;
+
+  DECLARE @data XML;
+  DECLARE @schema sysname;
+  DECLARE @object sysname;
+  DECLARE @eventType sysname;
+
+  SET @data = EVENTDATA();
+  SET @eventType = @data.value(
+    '(/EVENT_INSTANCE/EventType)[1]', 'sysname');
+  SET @schema = @data.value(
+    '(/EVENT_INSTANCE/SchemaName)[1]', 'sysname');
+  SET @object = @data.value(
+    '(/EVENT_INSTANCE/ObjectName)[1]', 'sysname') 
+
+  IF @object IS NOT NULL
+    PRINT '  ' + @eventType + ' - ' + @schema + '.' + @object;
+  ELSE
+    PRINT '  ' + @eventType + ' - ' + @schema;
+
+  IF @eventType IS NULL
+    PRINT CONVERT(nvarchar(max), @data);
+
+  INSERT [dbo].[DatabaseLog] 
+    (
+    [PostTime], 
+    [DatabaseUser], 
+    [Event], 
+    [Schema], 
+    [Object], 
+    [TSQL], 
+    [XmlEvent]
+    ) 
+  VALUES 
+    (
+    GETDATE(), 
+    CONVERT(sysname, CURRENT_USER), 
+    @eventType, 
+    CONVERT(sysname, @schema), 
+    CONVERT(sysname, @object), 
+    @data.value('(/EVENT_INSTANCE/TSQLCommand)[1]', 'nvarchar(max)'), 
+    @data
+    );
+END;
+GO
+
+-- ****************************************
+-- Create Data Types
+-- ****************************************
+
+CREATE TYPE [AccountNumber] FROM nvarchar(15) NULL;
+CREATE TYPE [Flag] FROM bit NOT NULL;
+CREATE TYPE [NameStyle] FROM bit NOT NULL;
+CREATE TYPE [Name] FROM nvarchar(50) NULL;
+CREATE TYPE [OrderNumber] FROM nvarchar(25) NULL;
+CREATE TYPE [Phone] FROM nvarchar(25) NULL;
+GO
+
+-- other ...
+
+-- ******************************************************
+-- Add pre-table database functions.
+-- ******************************************************
+
+CREATE FUNCTION [dbo].[ufnLeadingZeros](
+    @Value int
+) 
+RETURNS varchar(8) 
+WITH SCHEMABINDING 
+AS 
+BEGIN
+    DECLARE @ReturnValue varchar(8);
+
+    SET @ReturnValue = CONVERT(varchar(8), @Value);
+    SET @ReturnValue = REPLICATE('0', 8 - DATALENGTH(@ReturnValue)) 
+      + @ReturnValue;
+
+    RETURN (@ReturnValue);
+END;
+GO
+
+-- other ...
+
+-- ******************************************************
+-- Create database schemas
+-- ******************************************************
+
+CREATE SCHEMA [HumanResources] AUTHORIZATION [dbo];
+GO
+
+-- other ...
+
+-- ****************************************
+-- Create XML schemas
+-- ****************************************
+
+CREATE XML SCHEMA COLLECTION [Person].[AdditionalContactInfoSchemaCollection] AS 
+'<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema 
+  targetNamespace="http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/ContactInfo" 
+  xmlns="http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/ContactInfo" 
+  elementFormDefault="qualified"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema" >
+
+  <!-- 
+    the following imports are not needed. 
+    They simply provide readability 
+  -->
+  <xsd:import 
+    namespace="http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/ContactRecord" />
+  <xsd:import 
+    namespace="http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/ContactTypes" />
+
+  <xsd:element name="AdditionalContactInfo" >
+    <xsd:complexType mixed="true" >
+      <xsd:sequence>
+        <xsd:any processContents="strict" 
+            namespace="http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/ContactRecord 
+                http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/ContactTypes"
+                minOccurs="0" maxOccurs="unbounded" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>';
+GO
+
+ALTER XML SCHEMA COLLECTION [Person].[AdditionalContactInfoSchemaCollection] ADD 
+'<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema 
+  targetNamespace="http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/ContactRecord"
+  elementFormDefault="qualified"
+  xmlns="http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/ContactRecord"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema" >
+
+    <xsd:element name="ContactRecord" >
+        <xsd:complexType mixed="true" >
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
+                <xsd:any processContents="strict"  
+                    namespace="http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/ContactTypes" />
+            </xsd:choice>
+            <xsd:attribute name="date" type="xsd:date" />
+        </xsd:complexType>
+    </xsd:element>
+</xsd:schema>';
+GO
+
+-- and other ...
+
+-- ******************************************************
+-- Create tables
+-- ******************************************************
+
+CREATE TABLE [Person].[Address](
+    [AddressID] [int] IDENTITY (1, 1) NOT FOR REPLICATION NOT NULL,
+    [AddressLine1] [nvarchar](60) NOT NULL, 
+    [AddressLine2] [nvarchar](60) NULL, 
+    [City] [nvarchar](30) NOT NULL, 
+    [StateProvinceID] [int] NOT NULL,
+    [PostalCode] [nvarchar](15) NOT NULL, 
+	[SpatialLocation] [geography] NULL,
+    [rowguid] uniqueidentifier ROWGUIDCOL NOT NULL CONSTRAINT [DF_Address_rowguid] DEFAULT (NEWID()),
+    [ModifiedDate] [datetime] NOT NULL CONSTRAINT [DF_Address_ModifiedDate] DEFAULT (GETDATE())
+) ON [PRIMARY];
+GO
+
+-- and other ...
+
+-- ******************************************************
+-- Load data
+-- ******************************************************
+
+BULK INSERT [Person].[Address] 
+FROM '$(SqlSamplesSourceDataPath)Address.csv'
+WITH (
+    CHECK_CONSTRAINTS,
+    CODEPAGE='ACP',
+    DATAFILETYPE = 'char',
+    FIELDTERMINATOR= '\t',
+    ROWTERMINATOR = '\n',
+    KEEPIDENTITY,
+    TABLOCK
+);
+
+-- other data loading ...
+
+-- ******************************************************
+-- Add Primary Keys
+-- ******************************************************
+
+SET QUOTED_IDENTIFIER ON;
+
+ALTER TABLE [Person].[Address] WITH CHECK ADD 
+  CONSTRAINT [PK_Address_AddressID] PRIMARY KEY CLUSTERED 
+  (
+    [AddressID]
+  )  ON [PRIMARY];
+GO
+
+-- other constraints ...
+
+-- ******************************************************
+-- Add Indexes
+-- ******************************************************
+
+CREATE UNIQUE INDEX [AK_Address_rowguid] 
+ON [Person].[Address]([rowguid]) ON [PRIMARY];
+GO
+
+-- other indexes ...
+
+-- ****************************************
+-- Create XML index for each XML column
+-- ****************************************
+
+SET ARITHABORT ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+SET ANSI_WARNINGS ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+
+CREATE PRIMARY XML INDEX [PXML_Person_Demographics] 
+ON [Person].[Person]([Demographics]);
+GO
+
+CREATE XML INDEX [XMLPATH_Person_Demographics] 
+ON [Person].[Person]([Demographics]) 
+USING XML INDEX [PXML_Person_Demographics] FOR PATH;
+GO
+
+-- other ...
+
+-- ****************************************
+-- Create Full Text catalog and indexes
+-- ****************************************
+
+--This creates a default FULLTEXT CATALOG where 
+-- to logically store all the FTIndexes going to be created
+
+CREATE FULLTEXT CATALOG AW2016FullTextCatalog AS DEFAULT;
+GO
+
+--This creates a FULLTEXT INDEX on ProductReview table. 
+-- The index will cover the column 'Comments' 
+-- which contains plain text data.
+
+CREATE FULLTEXT INDEX 
+ON Production.ProductReview(Comments) 
+KEY INDEX PK_ProductReview_ProductReviewID;
+GO
+
+-- other ...
+
+-- ****************************************
+-- Create Foreign key constraints
+-- ****************************************
+
+ALTER TABLE [Person].[Address] ADD 
+    CONSTRAINT [FK_Address_StateProvince_StateProvinceID] 
+    FOREIGN KEY 
+    (
+        [StateProvinceID]
+    ) REFERENCES [Person].[StateProvince](
+        [StateProvinceID]
+    );
+GO
+
+-- other tables FK constraints
+
+-- ******************************************************
+-- Add table triggers.
+-- ******************************************************
+
+CREATE TRIGGER [HumanResources].[dEmployee] 
+ON [HumanResources].[Employee] 
+INSTEAD OF DELETE NOT FOR REPLICATION AS 
+BEGIN
+  DECLARE @Count int;
+
+  SET @Count = @@ROWCOUNT;
+  IF @Count = 0 
+      RETURN;
+
+  SET NOCOUNT ON;
+
+  BEGIN
+    RAISERROR
+      (N'Employees cannot be deleted.', -- Message
+      10, -- Severity.
+      1); -- State.
+
+    -- Rollback any active or uncommittable transactions
+    IF @@TRANCOUNT > 0
+    BEGIN
+      ROLLBACK TRANSACTION;
+    END
+  END;
+END;
+GO
+
+-- other tables triggers ...
+
+-- ******************************************************
+-- Add database views.
+
+CREATE VIEW [HumanResources].[vEmployeeDepartmentHistory] 
+AS 
+SELECT 
+    e.[BusinessEntityID] 
+    ,p.[Title] 
+    ,p.[FirstName] 
+    ,p.[MiddleName] 
+    ,p.[LastName] 
+    ,p.[Suffix] 
+    ,s.[Name] AS [Shift]
+    ,d.[Name] AS [Department] 
+    ,d.[GroupName] 
+    ,edh.[StartDate] 
+    ,edh.[EndDate]
+FROM [HumanResources].[Employee] e
+	INNER JOIN [Person].[Person] p
+	ON p.[BusinessEntityID] = e.[BusinessEntityID]
+    INNER JOIN [HumanResources].[EmployeeDepartmentHistory] edh 
+    ON e.[BusinessEntityID] = edh.[BusinessEntityID] 
+    INNER JOIN [HumanResources].[Department] d 
+    ON edh.[DepartmentID] = d.[DepartmentID] 
+    INNER JOIN [HumanResources].[Shift] s
+    ON s.[ShiftID] = edh.[ShiftID];
+GO
+
+-- other views ...
+
+-- ******************************************************
+-- Add database functions.
+-- ******************************************************
+
+CREATE FUNCTION [dbo].[ufnGetAccountingStartDate]()
+RETURNS [datetime] 
+AS 
+BEGIN
+    RETURN CONVERT(datetime, '20030701', 112);
+END;
+GO
+
+-- other functions ...
+
+-- ******************************************************
+-- Create stored procedures
+-- ******************************************************
+
+CREATE PROCEDURE [dbo].[uspGetBillOfMaterials]
+    @StartProductID [int],
+    @CheckDate [datetime]
+AS
+BEGIN
+  SET NOCOUNT ON;
+  -- Use recursive query to generate a multi-level Bill of Material 
+  -- (i.e. all level 1 components of a level 0 assembly, 
+  -- all level 2 components of a level 1 assembly)
+  -- The CheckDate eliminates any components that are no longer used 
+  -- in the product on this date.
+  WITH [BOM_cte]([ProductAssemblyID], [ComponentID], 
+  [ComponentDesc], [PerAssemblyQty], 
+  [StandardCost], [ListPrice], 
+  [BOMLevel], [RecursionLevel]) -- CTE name and columns
+  AS (
+    SELECT b.[ProductAssemblyID], b.[ComponentID], p.[Name], 
+      b.[PerAssemblyQty], p.[StandardCost], p.[ListPrice], 
+      b.[BOMLevel], 0 
+      -- Get the initial list of components for the bike assembly
+    FROM [Production].[BillOfMaterials] b
+        INNER JOIN [Production].[Product] p 
+        ON b.[ComponentID] = p.[ProductID] 
+    WHERE b.[ProductAssemblyID] = @StartProductID 
+        AND @CheckDate >= b.[StartDate] 
+        AND @CheckDate <= ISNULL(b.[EndDate], @CheckDate)
+    UNION ALL
+    SELECT b.[ProductAssemblyID], b.[ComponentID], p.[Name], 
+      b.[PerAssemblyQty], p.[StandardCost], p.[ListPrice], 
+      b.[BOMLevel], [RecursionLevel] + 1 
+      -- Join recursive member to anchor
+    FROM [BOM_cte] cte
+        INNER JOIN [Production].[BillOfMaterials] b 
+        ON b.[ProductAssemblyID] = cte.[ComponentID]
+        INNER JOIN [Production].[Product] p 
+        ON b.[ComponentID] = p.[ProductID] 
+    WHERE @CheckDate >= b.[StartDate] 
+        AND @CheckDate <= ISNULL(b.[EndDate], @CheckDate)
+    )
+  -- Outer select from the CTE
+  SELECT b.[ProductAssemblyID], b.[ComponentID], b.[ComponentDesc], 
+    SUM(b.[PerAssemblyQty]) AS [TotalQuantity] , 
+    b.[StandardCost], b.[ListPrice], b.[BOMLevel], b.[RecursionLevel]
+  FROM [BOM_cte] b
+  GROUP BY b.[ComponentID], b.[ComponentDesc], b.[ProductAssemblyID], 
+    b.[BOMLevel], b.[RecursionLevel], b.[StandardCost], b.[ListPrice]
+  ORDER BY b.[BOMLevel], b.[ProductAssemblyID], b.[ComponentID]
+  OPTION (MAXRECURSION 25) 
+END;
+GO
+
+-- other stored procedures ...
+
+-- ******************************************************
+-- Add Extended Properties
+-- ******************************************************
+
+SET NOCOUNT ON;
+GO
+
+-- Database
+EXECUTE [sys].[sp_addextendedproperty] N'MS_Description', 
+  N'AdventureWorks 2016 Sample OLTP Database', NULL, NULL, NULL, NULL;
+EXECUTE [sys].[sp_addextendedproperty] N'MS_Description', 
+  N'Database trigger to audit all of the DDL changes made \
+  to the AdventureWorks 2016 database.', 
+  N'TRIGGER', 
+  [ddlDatabaseTriggerLog], 
+  NULL, NULL, NULL, NULL;
+GO
+
+-- other ....
+
+SET NOCOUNT OFF;
+GO
+
+-- ****************************************
+-- Drop DDL Trigger for Database
+-- ****************************************
+
+DISABLE TRIGGER [ddlDatabaseTriggerLog] 
+ON DATABASE;
+GO
+
+/*
+-- Output database object creation messages
+SELECT [PostTime], [DatabaseUser], [Event], [Schema], 
+  [Object], [TSQL], [XmlEvent]
+FROM [dbo].[DatabaseLog];
+*/
+GO
+
+USE [master];
+GO
+
+SET NOEXEC OFF
